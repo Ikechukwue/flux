@@ -13,6 +13,13 @@ from .modules.conditioner import HFEmbedder
 from .modules.image_embedders import CannyImageEncoder, DepthImageEncoder, ReduxImageEncoder
 from .util import PREFERED_KONTEXT_RESOLUTIONS
 
+def adain(cnt_feat, sty_feat):
+    cnt_mean = cnt_feat.mean(dim=[0, 2, 3],keepdim=True)
+    cnt_std = cnt_feat.std(dim=[0, 2, 3],keepdim=True)
+    sty_mean = sty_feat.mean(dim=[0, 2, 3],keepdim=True)
+    sty_std = sty_feat.std(dim=[0, 2, 3],keepdim=True)
+    output = ((cnt_feat-cnt_mean)/cnt_std)*sty_std + sty_mean
+    return output
 
 def get_noise(
     num_samples: int,
@@ -213,6 +220,7 @@ def prepare_kontext(
     prompt: str | list[str],
     ae: AutoEncoder,
     img_cond_path: str,
+    img_sty_path:str,
     seed: int,
     device: torch.device,
     target_width: int | None = None,
@@ -237,13 +245,29 @@ def prepare_kontext(
     img_cond = rearrange(img_cond, "h w c -> 1 c h w")
     img_cond_orig = img_cond.clone()
 
+    img_sty = Image.open(img_sty_path).convert("RGB")
+    img_sty = img_sty.resize((8 * width, 8 * height), Image.Resampling.LANCZOS)
+    img_sty = np.array(img_sty)
+    img_sty = torch.from_numpy(img_sty).float() / 127.5 - 1.0
+    img_sty = rearrange(img_sty, "h w c -> 1 c h w")
+
+
     with torch.no_grad():
         img_cond = ae.encode(img_cond.to(device))
+        img_sty = ae.encode(img_sty.to(device))
+
+    #Added AdaIN 
+    img_cond = adain(img_cond, img_sty)
 
     img_cond = img_cond.to(torch.bfloat16)
     img_cond = rearrange(img_cond, "b c (h ph) (w pw) -> b (h w) (c ph pw)", ph=2, pw=2)
     if img_cond.shape[0] == 1 and bs > 1:
         img_cond = repeat(img_cond, "1 ... -> bs ...", bs=bs)
+
+    img_sty = img_sty.to(torch.bfloat16)
+    img_sty = rearrange(img_sty, "b c (h ph) (w pw) -> b (h w) (c ph pw)", ph=2, pw=2)
+    if img_sty.shape[0] == 1 and bs > 1:
+        img_sty = repeat(img_sty, "1 ... -> bs ...", bs=bs)
 
     # image ids are the same as base image with the first dimension set to 1
     # instead of 0
@@ -271,6 +295,8 @@ def prepare_kontext(
     return_dict["img_cond_seq"] = img_cond
     return_dict["img_cond_seq_ids"] = img_cond_ids.to(device)
     return_dict["img_cond_orig"] = img_cond_orig
+    #return_dict["img_sty_seq"] = img_sty
+
     return return_dict, target_height, target_width
 
 

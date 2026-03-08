@@ -41,8 +41,9 @@ def run_filtered_batch(file_name):
 def run():
     flux_kontext_main(
         prompt="",
-        img_cond_path="/data/local/nemmler/data/ddi/000001.png",
-        #device="cuda",
+        img_cond_path="/home/stud/nemmler/stylessp_repo/methods/flux/assets/cnt.png",
+        img_sty_path="/home/stud/nemmler/stylessp_repo/methods/flux/assets/sty.png",
+        device="cuda",
         offload=True,
         output_dir="output",
         loop=False, 

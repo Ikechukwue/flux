@@ -29,6 +29,7 @@ class SamplingOptions:
     guidance: float
     seed: int | None
     img_cond_path: str
+    img_sty_path: str
 
 
 def parse_prompt(options: SamplingOptions) -> SamplingOptions | None:
@@ -159,7 +160,8 @@ def main(
     offload: bool = False,
     output_dir: str = "output",
     add_sampling_metadata: bool = True,
-    img_cond_path: str = "data/ddi/000013.png",
+    img_cond_path: str = "/home/stud/nemmler/stylessp_repo/methods/flux/assets/cnt.png",
+    img_sty_path: str = "/home/stud/nemmler/stylessp_repo/methods/flux/assets/sty.png",
     trt: bool = False,
     trt_transformer_precision: str = "bf16",
     track_usage: bool = False,
@@ -255,6 +257,7 @@ def main(
         guidance=guidance,
         seed=seed,
         img_cond_path=img_cond_path,
+        img_sty_path=img_sty_path
     )
 
     if loop:
@@ -294,6 +297,7 @@ def main(
             prompt=opts.prompt,
             ae=ae,
             img_cond_path=opts.img_cond_path,
+            img_sty_path=opts.img_sty_path,
             target_width=opts.width,
             target_height=opts.height,
             bs=1,
