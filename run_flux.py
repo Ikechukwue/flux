@@ -6,7 +6,7 @@ from flux.cli_kontext import main as flux_kontext_main
 CSV_FILE = "/data/local/nemmler/data/ddi/ddi_metadata.csv"
 GLOBAL_PROMPT = ""
 OUTPUT_FOLDER = "output/flux/test"
-DEVICE = "cuda:2"
+DEVICE = "cuda:0"
 # ---------------------
 
 def run_filtered_batch(file_name):
@@ -27,16 +27,27 @@ def run_filtered_batch(file_name):
         print(f"\n>>> Processing image {i+1}/{len(filtered_df)}: {input_path}")
         try:
             flux_kontext_main(
-                prompt=GLOBAL_PROMPT,
+                prompt="",
                 img_cond_path=input_path,
                 device=DEVICE,
                 offload=True,
-                output_dir=OUTPUT_FOLDER,
+                output_dir="output",
                 loop=False, 
                 seed=1234
             )
         except Exception as e:
             print(f"Error on {input_path}: {e}")
 
+def run():
+    flux_kontext_main(
+        prompt="",
+        img_cond_path="/data/local/nemmler/data/ddi/000001.png",
+        #device="cuda",
+        offload=True,
+        output_dir="output",
+        loop=False, 
+        seed=1234
+    )
 if __name__ == "__main__":
-    run_filtered_batch('DDI_file')
+    #run_filtered_batch('DDI_file')
+    run()
